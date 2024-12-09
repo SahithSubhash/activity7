@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Interactive Scatterplot with Brushing</title>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+        svg {
+            width: 40vw;
+            height: 40vw;
+        }
+        div {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+        .list-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            width: 50vw;
+            padding: 20px;
+            background-color: #f3f3f3;
+            border-left: 1px solid #ccc;
+            overflow-y: auto;
+        }
+        .list-container h3 {
+            font-size: 18px;
+            color: #444;
+            margin-bottom: 10px;
+        }
+        #selected-list {
+            padding: 10px;
+            list-style: none;
+            background-color: #fff;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            max-height: 100%;
+            overflow-y: auto;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            flex-grow: 1;
+        }
+        #selected-list li {
+            padding: 10px;
+            margin: 0;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+            color: #555;
+        }
+        #selected-list li:last-child {
+            border-bottom: none;
+        }
+        ul {
+            margin: 0 100px;
+        }
+    </style>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="js/scatterplot.problem.js"></script>
+    <link rel="stylesheet" href="styles/style.css">
+</head>
+<body>
+<div>
+    <svg viewBox="0 0 1000 1000" id="figure1"></svg>
+    <svg viewBox="0 0 1000 1000" id="figure2"></svg>
+</div>
+<div>
+    <ul id="selected-list"></ul>
+</div>
+
+<script>
+    d3.csv("./data/car_sample_data.csv", row => ({
+        ...row,
+        Price: +row.Price,
+        MPG: +row.MPG,
+        Weight: +row.Weight,
+        Horsepower: +row.Horsepower,
+        "Engine Size": +row.EngineSizeCI
+    })).then(dataset => {
+        createScatterPlot(
+            data = dataset,
+            "#figure1",
+            title = "MPG vs Price",
+            xCol = "Price",
+            yCol = "MPG",
+            rCol = "Weight",
+            legend = [],
+            colorCol = "Country",
+            margin = 150
+        );
+
+        createScatterPlot(
+            data = dataset,
+            "#figure2",
+            title = "MPG vs Engine Size",
+            xCol = "Engine Size",
+            yCol = "MPG",
+            rCol = "Weight",
+            legend = [],
+            colorCol = "Country",
+            margin = 150
+        );
+
+        document.addEventListener("mousemove", () => {
+            const listBox = d3.select("#selected-list");
+            const selectedPoints = Array.from(document.querySelectorAll(".selected"));
+            const models = [...new Set(selectedPoints.map(d => d.getAttribute("data-model")))];
+
+            listBox.selectAll("li").remove();
+
+            if (models.length > 0) {
+                listBox.selectAll(".listVals")
+                    .data(models)
+                    .enter()
+                    .append("li")
+                    .attr("class", "listVals")
+                    .text(model => {
+                        const modelData = dataset.find(item => item.Model === model);
+                        return modelData
+                            ? `${modelData.Model} - ${modelData.Type}`
+                            : `Model: ${model} (Data not found)`;
+                    });
+            }
+        });
+    });
+</script>
+</body>
+</html>
